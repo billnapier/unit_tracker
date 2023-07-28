@@ -15,7 +15,8 @@ db = firestore.client()
 
 _COMITTEE_CHAIR = 'Committee Chair'
 _COR = 'Chartered Organization Rep.'
-_UNIT_LEADER = frozenset(['Cubmaster', 'Scoutmaster', 'Skipper', 'Venturing Crew Advisor'])
+_UNIT_LEADER = frozenset(
+    ['Cubmaster', 'Scoutmaster', 'Skipper', 'Venturing Crew Advisor'])
 
 _COMITTEE_CHAIR_KEY = 'cc'
 _COR_KEY = 'cor'
@@ -36,25 +37,25 @@ def root():
     </BODY></HTML>
     """
 
+
 def UnitNameToUnitType(name):
     return name.split(' ')[0].upper()
+
 
 def UnitNameToUnitLetter(name):
     return UnitNameToUnitType(name)[0]
 
+
 def UnitNameToNumber(name):
     num = name.split(' ')[1]
-    ret = ''
-    for c in num:
-        if c != '0':
-            ret = ret + c
-    return ret
+    return str(int(num))
+
 
 @app.route("/upload", methods=['POST'])
 def upload():
     logging.warning("%s" % request.files)
     if 'file' not in request.files:
-            return 'No file part'
+        return 'No file part'
     fp = request.files['file'].stream
     # Skip the first 8 header lines in this report.
     for _ in range(8):
@@ -67,10 +68,10 @@ def upload():
             position = row['Position']
 
             key = '%s %s' % (unit_type, unit_num)
-            leader = dict(name = row['Name_'], email=row['Email'])
+            leader = dict(name=row['Name_'], email=row['Email'])
 
-            unit_entry = dict(key=key, unit_type=UnitNameToUnitType(row['Unit_Name']), 
-                unit_num=unit_num)
+            unit_entry = dict(key=key, unit_type=UnitNameToUnitType(row['Unit_Name']),
+                              unit_num=unit_num)
             if position == _COR:
                 unit_entry[_COR_KEY] = leader
             elif position == _COMITTEE_CHAIR:
@@ -80,15 +81,41 @@ def upload():
             else:
                 logging.error('%s is an unknow leader type' % position)
 
+            logging.warning('Storing unit %s', key)
             db.collection('units').document(key).set(unit_entry, merge=True)
     return redirect('/')
+
+
+def get_contacts_from_unit(unit):
+    return [contact for contact in [unit.get('leader'), unit.get('cor'), unit.get('cc')] if contact is not None]
+
 
 @app.route('/units')
 def list_units():
     doc = '<HTML><BODY><UL>'
+    all_emails = []
     for unit in db.collection('units').stream():
-        doc = doc + ('<LI>%s %s' % (unit.get('unit_type'), unit.get('unit_num')))
-        logging.warning(unit.get('key'))
+        doc = doc + ('<LI><A HREF="/units/%s">%s %s</A>' %
+                     (unit.get('key'), unit.get('unit_type'), unit.get('unit_num')))
+        all_emails.extend([c.get('email')
+                          for c in get_contacts_from_unit(unit.to_dict())])
+    doc = doc + '</UL>'
+    doc = doc + \
+        '<A HREF="mailto:xxxx@x.com&bcc=%s">BCC EVERYONE</A>' % ','.join(
+            all_emails)
+    doc = doc + '</BODY></HTML>'
+    return doc
+
+
+@app.route('/units/<unit_key>')
+def list_single_unit(unit_key: str):
+    logging.warning(unit_key)
+    unit = db.collection('units').document(unit_key).get()
+    doc = '<HTML><BODY><UL>'
+    doc = doc + '<H1>' + unit.get('unit_type') + \
+        ' ' + unit.get('unit_num') + '</H1>'
+    doc = doc + '<a href="mailto:%s">MAIL</a>' % ','.join(
+        [c.get('email') for c in get_contacts_from_unit(unit)])
     doc = doc + '</UL></BODY></HTML>'
     return doc
 
