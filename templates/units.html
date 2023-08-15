@@ -1,0 +1,9 @@
+<HTML><BODY>
+    <UL>
+        {% for unit in units %}
+        <LI><a href="{{ url_for('list_single_unit', unit_key=unit.key) }}">{{unit.unit_type}} {{unit.unit_num}}</a></LI>
+        {% endfor %}
+    </UL>
+
+    <A HREF="mailto:xxxx@x.com&bcc={{ all_emails|join(',')}}">BCC EVERYONE</A>
+</BODY></HTML>

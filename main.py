@@ -4,7 +4,7 @@ import logging
 import os
 import markdown2
 
-from flask import Flask, request, redirect
+from flask import Flask, request, redirect, render_template
 
 import firebase_admin
 from firebase_admin import firestore
@@ -26,17 +26,7 @@ _UNIT_LEADER_KEY = 'leader'
 
 @app.route("/")
 def root():
-    return f"""
-    <HTML><BODY>
-        <a href="/units">View Units</a>
-        <H1>Upload New Unit CSV</H1>
-        <form enctype="multipart/form-data" action="upload" method="POST">
-            <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
-            Choose a file to upload: <input name="file" type="file" /><br />
-            <input type="submit" value="Upload File" />
-        </form>
-    </BODY></HTML>
-    """
+    return render_template('main.html')
 
 
 def UnitNameToUnitType(name):
@@ -93,32 +83,23 @@ def get_contacts_from_unit(unit):
 
 @app.route('/units')
 def list_units():
-    doc = '<HTML><BODY><UL>'
+    units = [u.to_dict() for u in db.collection('units').stream()]
     all_emails = []
-    for unit in db.collection('units').stream():
-        doc = doc + ('<LI><A HREF="/units/%s">%s %s</A>' %
-                     (unit.get('key'), unit.get('unit_type'), unit.get('unit_num')))
+    for unit in units:
         all_emails.extend([c.get('email')
-                          for c in get_contacts_from_unit(unit.to_dict())])
-    doc = doc + '</UL>'
-    doc = doc + \
-        '<A HREF="mailto:xxxx@x.com&bcc=%s">BCC EVERYONE</A>' % ','.join(
-            all_emails)
-    doc = doc + '</BODY></HTML>'
-    return doc
+                          for c in get_contacts_from_unit(unit)])
+
+    return render_template('units.html', units=units, all_emails=all_emails)
 
 
 @app.route('/units/<unit_key>')
 def list_single_unit(unit_key: str):
     logging.warning(unit_key)
-    unit = db.collection('units').document(unit_key).get()
-    doc = '<HTML><BODY><UL>'
-    doc = doc + '<H1>' + unit.get('unit_type') + \
-        ' ' + unit.get('unit_num') + '</H1>'
-    doc = doc + '<a href="mailto:%s">MAIL</a>' % ','.join(
-        [c.get('email') for c in get_contacts_from_unit(unit)])
-    doc = doc + '</UL></BODY></HTML>'
-    return doc
+    unit = db.collection('units').document(unit_key).get().to_dict()
+    return render_template('single_unit.html',
+                           unit=unit,
+                           emails=[c.get('email') for c in get_contacts_from_unit(unit)])
+
 
 @app.route('/testing', methods=['POST', 'GET'])
 def testing():
@@ -142,7 +123,7 @@ def testing():
         </BODY></HTML>
         """ % (markdown, code)
     else:
-        return markdown2.markdown("*SEND*") 
+        return markdown2.markdown("*SEND*")
 
 
 if __name__ == "__main__":
