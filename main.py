@@ -4,10 +4,14 @@ import logging
 import os
 import markdown2
 
-from flask import Flask, request, redirect, render_template
+from flask import Flask, request, redirect, render_template, render_template_string
 
 import firebase_admin
 from firebase_admin import firestore
+
+from email.message import EmailMessage
+from email.headerregistry import Address
+from smtplib import SMTP_SSL
 
 app = Flask(__name__)
 
@@ -101,29 +105,41 @@ def list_single_unit(unit_key: str):
                            emails=[c.get('email') for c in get_contacts_from_unit(unit)])
 
 
-@app.route('/testing', methods=['POST', 'GET'])
-def testing():
-    if request.method == 'GET' or request.form.get('preview'):
-        code = request.form.get('msg')
-        if code:
-            markdown = markdown2.markdown(code)
-        else:
-            markdown = ''
-        return f"""
-        <HTML><BODY>
-            %s
-            <form enctype="multipart/form-data" action="/testing" method="POST">
-            <label for="msg">msg:</label><br>
+@app.route('/send_email', methods=['POST', 'GET'])
+def send_email():
+    unit_type = request.args.get('unit_type', 'PACK')
+    code = request.form.get('msg', '')
+    subject = request.form.get('subject', '')
 
-                <textarea id="msg" name="msg" rows="50" cols="50">%s</textarea>
-                <br>
-                <input type="submit" value="Preview" name="preview" /><br>
-                <input type="submit" value="Send" name="send"/>
-            </form>
-        </BODY></HTML>
-        """ % (markdown, code)
+    units = [u.to_dict() for u in db.collection(
+        'units').where("unit_type", "==", 'PACK').stream()]
+
+    markdown = markdown2.markdown(render_template_string(code, unit=units[0]))
+
+    if request.method == 'GET' or request.form.get('preview'):
+        return render_template('send_email.html', markdown=markdown, code=code, unit_type=unit_type, subject=subject, units=units)
     else:
-        return markdown2.markdown("*SEND*")
+        send_to_units(code=code, unit_type=unit_type,
+                      subject=subject, units=units)
+        redirect(url_for('root'))
+
+
+def send_to_units(code, unit_type, subject, units):
+    smtp_config = db.collection('configs').document('smtp').get().to_dict()
+
+    with SMTP_SSL(smtp_config.get('hostname'), port=smtp_config.get('port')) as smtp:
+        smtp.login(smtp_config.get('username'), smtp_config.get('password'))
+
+        for unit in units:
+            msg = EmailMessage()
+            msg['Subject'] = subject
+            msg['From'] = Address(smtp_config.get(
+                'from_display_name'), addr_spec=smtp_config.get('from_email'))
+            msg['To'] = [c.get('email') for c in get_contacts_from_unit(unit)]
+            msg.set_content(code)
+            markdown = markdown2.markdown(code)
+            msg.add_alternative(markdown, subtype='html')
+            smtp.send_message(msg)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,25 @@
+<HTML>
+
+<BODY>
+    {{markdown|safe}}
+    <form enctype="multipart/form-data" action="{{url_for('send_email')}}" method="POST">
+        <label for="subject">Subject:</label><br>
+        <input type="text" id="subject" name="subject" value="{{subject}}">
+        <label for="msg">msg:</label><br>
+
+        <textarea id="msg" name="msg" rows="50" cols="50">{{ code }}</textarea>
+        <br>
+        <input type="hidden" id="unit_type" name="unit_type" value="{{unit_type}}">
+        <input type="submit" value="Preview" name="preview" /><br>
+        <input type="submit" value="Send" name="send" />
+    </form>
+
+    <h2>Will send to</h2>
+    <ul>
+    {% for unit in units %}
+        <li>{{unit.unit_type}} {{unit.unit_num}}</li>
+    {% endfor %}
+</ul>
+</BODY>
+
+</HTML>
