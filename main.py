@@ -2,6 +2,7 @@ import csv
 import io
 import logging
 import os
+import markdown2
 
 from flask import Flask, request, redirect
 
@@ -118,6 +119,30 @@ def list_single_unit(unit_key: str):
         [c.get('email') for c in get_contacts_from_unit(unit)])
     doc = doc + '</UL></BODY></HTML>'
     return doc
+
+@app.route('/testing', methods=['POST', 'GET'])
+def testing():
+    if request.method == 'GET' or request.form.get('preview'):
+        code = request.form.get('msg')
+        if code:
+            markdown = markdown2.markdown(code)
+        else:
+            markdown = ''
+        return f"""
+        <HTML><BODY>
+            %s
+            <form enctype="multipart/form-data" action="/testing" method="POST">
+            <label for="msg">msg:</label><br>
+
+                <textarea id="msg" name="msg" rows="50" cols="50">%s</textarea>
+                <br>
+                <input type="submit" value="Preview" name="preview" /><br>
+                <input type="submit" value="Send" name="send"/>
+            </form>
+        </BODY></HTML>
+        """ % (markdown, code)
+    else:
+        return markdown2.markdown("*SEND*") 
 
 
 if __name__ == "__main__":
