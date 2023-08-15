@@ -118,13 +118,17 @@ def send_email():
 
     if request.method == 'GET' or request.form.get('preview'):
         return render_template('send_email.html', markdown=markdown, code=code, unit_type=unit_type, subject=subject, units=units)
-    else:
+    elif request.form.get('send'):
         send_to_units(code=code, unit_type=unit_type,
                       subject=subject, units=units)
         redirect(url_for('root'))
+    else:
+        send_to_units(code=code, unit_type=unit_type,
+                      subject=subject, units=units, send_test=True)
+        return render_template('send_email.html', markdown=markdown, code=code, unit_type=unit_type, subject=subject, units=units)
 
 
-def send_to_units(code, unit_type, subject, units):
+def send_to_units(code, unit_type, subject, units, send_test=False):
     smtp_config = db.collection('configs').document('smtp').get().to_dict()
 
     with SMTP_SSL(smtp_config.get('hostname'), port=smtp_config.get('port')) as smtp:
@@ -135,11 +139,17 @@ def send_to_units(code, unit_type, subject, units):
             msg['Subject'] = subject
             msg['From'] = Address(smtp_config.get(
                 'from_display_name'), addr_spec=smtp_config.get('from_email'))
-            msg['To'] = [c.get('email') for c in get_contacts_from_unit(unit)]
+            if send_test:
+                msg['To'] = Address(smtp_config.get(
+                    'from_display_name'), addr_spec=smtp_config.get('from_email'))
+            else:
+                msg['To'] = [c.get('email')
+                             for c in get_contacts_from_unit(unit)]
             msg['Cc'] = Address(smtp_config.get(
                 'from_display_name'), addr_spec=smtp_config.get('from_email'))
             msg.set_content(code)
-            msg.add_alternative(markdown2.markdown(render_template_string(code, unit=unit)), subtype='html')
+            msg.add_alternative(markdown2.markdown(
+                render_template_string(code, unit=unit)), subtype='html')
             smtp.send_message(msg)
 
 
