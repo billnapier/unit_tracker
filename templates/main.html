@@ -1,9 +1,17 @@
-<HTML><BODY>
-    <a href="/units">View Units</a>
+<HTML>
+
+<BODY>
+    <ul>
+        <li><a href="{{url_for('list_units')}}">View Units</a>
+        <li><a href="{{url_for('email', type='PACK')}}">Email Packs</a>
+        <li><a href="{{url_for('email', type='TROOP')}}">Email Troops</a>
+    </ul>
     <H1>Upload New Unit CSV</H1>
     <form enctype="multipart/form-data" action="upload" method="POST">
         <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
         Choose a file to upload: <input name="file" type="file" /><br />
         <input type="submit" value="Upload File" />
     </form>
-</BODY></HTML>
+</BODY>
+
+</HTML>
