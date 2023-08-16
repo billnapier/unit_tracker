@@ -4,7 +4,7 @@ import logging
 import os
 import markdown2
 
-from flask import Flask, request, redirect, render_template, render_template_string
+from flask import Flask, request, redirect, render_template, render_template_string, url_for
 
 import firebase_admin
 from firebase_admin import firestore
