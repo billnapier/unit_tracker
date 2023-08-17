@@ -145,8 +145,8 @@ def send_to_units(code, unit_type, subject, units, send_test=False):
             else:
                 msg['To'] = [c.get('email')
                              for c in get_contacts_from_unit(unit)]
-            msg['Cc'] = Address(smtp_config.get(
-                'from_display_name'), addr_spec=smtp_config.get('from_email'))
+            msg['Cc'] = [Address(smtp_config.get(
+                'from_display_name'), addr_spec=smtp_config.get('from_email'))] + smtp_config.get('always_cc', [])
             msg.set_content(code)
             msg.add_alternative(markdown2.markdown(
                 render_template_string(code, unit=unit)), subtype='html')
