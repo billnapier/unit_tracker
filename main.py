@@ -107,12 +107,12 @@ def list_single_unit(unit_key: str):
 
 @app.route('/send_email', methods=['POST', 'GET'])
 def send_email():
-    unit_type = request.args.get('unit_type', 'PACK')
+    unit_type = request.form.get('unit_type', request.args.get('unit_type', 'PACK'))
     code = request.form.get('msg', '')
     subject = request.form.get('subject', '')
 
     units = [u.to_dict() for u in db.collection(
-        'units').where("unit_type", "==", 'PACK').stream()]
+        'units').where("unit_type", "==", unit_type).stream()]
 
     markdown = markdown2.markdown(render_template_string(code, unit=units[0]))
 

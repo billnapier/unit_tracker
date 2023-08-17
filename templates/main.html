@@ -3,8 +3,8 @@
 <BODY>
     <ul>
         <li><a href="{{url_for('list_units')}}">View Units</a>
-        <li><a href="{{url_for('send_email', type='PACK')}}">Email Packs</a>
-        <li><a href="{{url_for('send_email', type='TROOP')}}">Email Troops</a>
+        <li><a href="{{url_for('send_email', unit_type='PACK')}}">Email Packs</a>
+        <li><a href="{{url_for('send_email', unit_type='TROOP')}}">Email Troops</a>
     </ul>
     <H1>Upload New Unit CSV</H1>
     <form enctype="multipart/form-data" action="upload" method="POST">
