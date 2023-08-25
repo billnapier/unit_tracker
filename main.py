@@ -9,10 +9,6 @@ from flask import Flask, request, redirect, render_template, render_template_str
 import firebase_admin
 from firebase_admin import firestore
 
-from email.message import EmailMessage
-from email.headerregistry import Address
-from smtplib import SMTP_SSL
-
 app = Flask(__name__)
 
 fb_app = firebase_admin.initialize_app()
@@ -107,7 +103,8 @@ def list_single_unit(unit_key: str):
 
 @app.route('/send_email', methods=['POST', 'GET'])
 def send_email():
-    unit_type = request.form.get('unit_type', request.args.get('unit_type', 'PACK'))
+    unit_type = request.form.get(
+        'unit_type', request.args.get('unit_type', 'PACK'))
     code = request.form.get('msg', '')
     subject = request.form.get('subject', '')
 
@@ -119,38 +116,19 @@ def send_email():
     if request.method == 'GET' or request.form.get('preview'):
         return render_template('send_email.html', markdown=markdown, code=code, unit_type=unit_type, subject=subject, units=units)
     elif request.form.get('send'):
-        send_to_units(code=code, unit_type=unit_type,
+        send_to_units(code=code,
                       subject=subject, units=units)
         redirect(url_for('root'))
     else:
-        send_to_units(code=code, unit_type=unit_type,
+        send_to_units(code=code,
                       subject=subject, units=units, send_test=True)
         return render_template('send_email.html', markdown=markdown, code=code, unit_type=unit_type, subject=subject, units=units)
 
 
-def send_to_units(code, unit_type, subject, units, send_test=False):
-    smtp_config = db.collection('configs').document('smtp').get().to_dict()
-
-    with SMTP_SSL(smtp_config.get('hostname'), port=smtp_config.get('port')) as smtp:
-        smtp.login(smtp_config.get('username'), smtp_config.get('password'))
-
-        for unit in units:
-            msg = EmailMessage()
-            msg['Subject'] = subject
-            msg['From'] = Address(smtp_config.get(
-                'from_display_name'), addr_spec=smtp_config.get('from_email'))
-            if send_test:
-                msg['To'] = Address(smtp_config.get(
-                    'from_display_name'), addr_spec=smtp_config.get('from_email'))
-            else:
-                msg['To'] = [c.get('email')
-                             for c in get_contacts_from_unit(unit)]
-            msg['Cc'] = [Address(smtp_config.get(
-                'from_display_name'), addr_spec=smtp_config.get('from_email'))] + smtp_config.get('always_cc', [])
-            msg.set_content(code)
-            msg.add_alternative(markdown2.markdown(
-                render_template_string(code, unit=unit)), subtype='html')
-            smtp.send_message(msg)
+def send_to_units(code, subject, units, send_test=False):
+    for unit in units:
+        db.collection('mailqueue').add(
+            dict(subject=subject, code=code, unit=unit, send_test=send_test))
 
 
 if __name__ == "__main__":
