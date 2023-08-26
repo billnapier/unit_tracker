@@ -7,8 +7,10 @@ import firebase_admin
 from firebase_admin import firestore
 import markdown2
 
+from main import get_contacts_from_unit
 
-fb_app = firebase_admin.initialize_app()
+
+#fb_app = firebase_admin.initialize_app()
 db = firestore.client()
 
 
