@@ -4,6 +4,7 @@ import logging
 import os
 import markdown2
 import googlemaps
+from geojson import Point, dumps, FeatureCollection, Feature
 
 
 from flask import (
@@ -39,7 +40,7 @@ _UNIT_LEADER_KEY = "leader"
 
 @app.route("/")
 def root():
-    return render_template("main.html")
+    return render_template("main.html", googlemaps_api_key=googlemaps_config.get('api_key'))
 
 
 def UnitNameToUnitType(name):
@@ -207,6 +208,20 @@ def send_email():
             units=units,
         )
 
+def _unit_to_geo_feature(unit):
+    pin_info=unit.get('pin_info')
+    return Feature(geometry=Point((pin_info.get('longitude'), pin_info.get('latitude'))), 
+                   properties=dict(name=unit.get('key'),
+                                   address_line=f'{pin_info["address_line"]}',
+                                   city=f'{pin_info["city"]}',
+                                   state=f'{pin_info["state"]}',
+                                   zip=f'{pin_info["zipcode"]}',
+                                   ))
+
+@app.route("/unit_geojson")
+def unit_geojson():
+    units = [_unit_to_geo_feature(u.to_dict()) for u in db.collection("units").stream()]
+    return dumps(FeatureCollection(units))
 
 def send_to_units(code, subject, units, send_test=False):
     for unit in units:
