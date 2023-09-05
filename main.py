@@ -42,8 +42,8 @@ def UnitNameToNumber(name):
     return str(int(num))
 
 
-@app.route("/upload", methods=['POST'])
-def upload():
+@app.route("/upload_key3", methods=['POST'])
+def upload_key3():
     logging.warning("%s" % request.files)
     if 'file' not in request.files:
         return 'No file part'
@@ -74,6 +74,38 @@ def upload():
 
             logging.warning('Storing unit %s', key)
             db.collection('units').document(key).set(unit_entry, merge=True)
+    return redirect('/')
+
+
+@app.route("/upload_pin", methods=['POST'])
+def upload_pin():
+    logging.warning("%s" % request.files)
+    if 'file' not in request.files:
+        return 'No file part'
+    fp = request.files['file'].stream
+
+    with io.StringIO(fp.read().decode()) as f:
+        for row in csv.DictReader(f):
+            full_unit_name = row['Unit_Name']
+            unit_name = full_unit_name.split(', ')[0]
+
+            unit_type = UnitNameToUnitLetter(unit_name)
+            unit_num = UnitNameToNumber(unit_name)
+
+            key = '%s %s' % (unit_type, unit_num)
+
+            addrline = row['Unit_BeAScout_Address']
+            city = row['City']
+            state = row['State']
+            zipcode = row['ZIPCODE']
+            last_modified_date = row['Last_Modified_Date']
+
+            unit_entry = dict(key=key, unit_type=UnitNameToUnitType(row['Unit_Name']),
+                              unit_num=unit_num, pin_info=dict(address_line=addrline, city=city, state=state, zipcode=zipcode, last_modified_date=last_modified_date), website=row['Unit_Website'])
+
+            db.collection('units').document(key).set(unit_entry, merge=True)
+
+            logging.error(unit_name)
     return redirect('/')
 
 

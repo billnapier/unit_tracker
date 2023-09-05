@@ -6,12 +6,18 @@
         <li><a href="{{url_for('send_email', unit_type='PACK')}}">Email Packs</a>
         <li><a href="{{url_for('send_email', unit_type='TROOP')}}">Email Troops</a>
     </ul>
-    <H1>Upload New Unit CSV</H1>
-    <form enctype="multipart/form-data" action="upload" method="POST">
+    <H1>Upload Key 3 CSV</H1>
+    <form enctype="multipart/form-data" action="{{url_for('upload_key3')}}" method="POST">
         <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
-        Choose a file to upload: <input name="file" type="file" /><br />
+        Choose a file to upload: <input name="file" type="file" />
         <input type="submit" value="Upload File" />
     </form>
+    <H1>Upload Unit Pin CSV</H1>
+    <form enctype="multipart/form-data" action="{{url_for('upload_pin')}}" method="POST">
+        <input type="hidden" name="MAX_FILE_SIZE" value="100000" />
+        Choose a file to upload: <input name="file" type="file" />
+        <input type="submit" value="Upload File" />
+    </form>    
 </BODY>
 
 </HTML>
