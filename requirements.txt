@@ -4,4 +4,4 @@ geojson==3.0.1
 google-cloud-firestore==2.11.1
 googlemaps==4.10.0
 gunicorn==20.1.0
-markdown2==2.4.10
+markdown2==2.4.11
