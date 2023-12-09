@@ -1,7 +1,7 @@
 Flask==3.0.0
 firebase-admin==6.1.0
 geojson==3.1.0
-google-cloud-firestore==2.11.1
+google-cloud-firestore==2.13.1
 googlemaps==4.10.0
 gunicorn==20.1.0
 markdown2==2.4.11
