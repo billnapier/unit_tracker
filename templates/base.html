@@ -1,0 +1,17 @@
+<HTML>
+<head>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script type="module" src="{{url_for('static', filename='maps.js')}}"></script>
+    <style>
+#map {
+  height: 50%;
+  width: 50%;
+}
+</style>
+</head>
+
+<BODY>
+    {% block content %}{% endblock %}
+</BODY>
+
+</HTML>
