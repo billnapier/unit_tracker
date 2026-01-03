@@ -1,20 +1,11 @@
-<HTML>
-<head>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <script type="module" src="{{url_for('static', filename='maps.js')}}"></script>
-    <style>
-#map {
-  height: 50%;
-  width: 50%;
-}
-</style>
-</head>
+{% extends "base.html" %}
 
-<BODY>
+{% block content %}
     <ul>
         <li><a href="{{url_for('list_units')}}">View Units</a>
         <li><a href="{{url_for('send_email', unit_type='PACK')}}">Email Packs</a>
         <li><a href="{{url_for('send_email', unit_type='TROOP')}}">Email Troops</a>
+        <li><a href="{{url_for('logout')}}">Logout</a></li>
     </ul>
     <H1>Upload Key 3 CSV</H1>
     <form enctype="multipart/form-data" action="{{url_for('upload_key3')}}" method="POST">
@@ -35,6 +26,4 @@
       src="https://maps.googleapis.com/maps/api/js?key={{googlemaps_api_key}}&callback=initMap&v=weekly"
       defer
     ></script>
-</BODY>
-
-</HTML>
+{% endblock %}

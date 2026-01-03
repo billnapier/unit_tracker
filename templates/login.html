@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Login</div>
+                <div class="card-body">
+                    <p>Please login with your Google account to access this application.</p>
+                    <a href="{{ url_for('login') }}" class="btn btn-primary">Login with Google</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
